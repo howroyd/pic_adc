@@ -61,12 +61,118 @@ void mcc_blinky(void (*set_high)(void), void (*set_low)(void), const uint8_t num
 }
 
 static inline bool set_channel(const uint8_t channel) {
+    static uint8_t current_channel;
+    
+    if (channel == current_channel) return true;
+    
     // Return zero if an erroneous channel number is asked for
     if (channel > 16) return 0;
 
     // Disable the MAX306 common output
     en_SetLow();
     
+    switch (channel) {
+        case 1:
+            add0_SetLow();
+            add1_SetLow();
+            add2_SetLow();
+            add3_SetLow();
+            break;
+        case 2:
+            add0_SetHigh();
+            add1_SetLow();
+            add2_SetLow();
+            add3_SetLow();
+            break;   
+        case 3:
+            add0_SetLow();
+            add1_SetHigh();
+            add2_SetLow();
+            add3_SetLow();
+            break;   
+        case 4:
+            add0_SetHigh();
+            add1_SetHigh();
+            add2_SetLow();
+            add3_SetLow();
+            break;   
+        case 5:
+            add0_SetLow();
+            add1_SetLow();
+            add2_SetHigh();
+            add3_SetLow();
+            break;   
+        case 6:
+            add0_SetHigh();
+            add1_SetLow();
+            add2_SetHigh();
+            add3_SetLow();
+            break;   
+        case 7:
+            add0_SetLow();
+            add1_SetHigh();
+            add2_SetHigh();
+            add3_SetLow();
+            break;   
+        case 8:
+            add0_SetHigh();
+            add1_SetHigh();
+            add2_SetHigh();
+            add3_SetLow();
+            break;   
+        case 9:
+            add0_SetLow();
+            add1_SetLow();
+            add2_SetLow();
+            add3_SetHigh();
+            break;  
+        case 10:
+            add0_SetHigh();
+            add1_SetLow();
+            add2_SetLow();
+            add3_SetHigh();
+            break;  
+        case 11:
+            add0_SetLow();
+            add1_SetHigh();
+            add2_SetLow();
+            add3_SetHigh();
+            break;  
+        case 12:
+            add0_SetHigh();
+            add1_SetHigh();
+            add2_SetLow();
+            add3_SetHigh();
+            break;  
+        case 13:
+            add0_SetLow();
+            add1_SetLow();
+            add2_SetHigh();
+            add3_SetHigh();
+            break;  
+        case 14:
+            add0_SetHigh();
+            add1_SetLow();
+            add2_SetHigh();
+            add3_SetHigh();
+            break;  
+        case 15:
+            add0_SetLow();
+            add1_SetHigh();
+            add2_SetHigh();
+            add3_SetHigh();
+            break;  
+        case 16:
+            add0_SetHigh();
+            add1_SetHigh();
+            add2_SetHigh();
+            add3_SetHigh();
+            break;  
+        default:
+            return 0;
+            break;
+    }
+    /*
     // Set the correct address pins on MAX306
     if (channel % 2 == 0) add0_SetHigh();
     else add0_SetLow();
@@ -85,16 +191,18 @@ static inline bool set_channel(const uint8_t channel) {
     
     if (channel > 8) add3_SetHigh();
     else add2_SetLow();
-    
+    */
     // Enable the MAX306 common output
     en_SetHigh();
+    
+    current_channel = channel;
     
     // If we get here, all ok, return true
     // TODO:  Add a readback check on address outputs
     return true;
 }
 
-static inline int16_t get_adc(const uint8_t channel) {
+static inline uint16_t get_adc(const uint8_t channel) {
     // Allocate some persistent memory for the output register
     static uint16_t out_val;
     
@@ -102,7 +210,7 @@ static inline int16_t get_adc(const uint8_t channel) {
     if (!set_channel(channel)) return -1;
     
     // Arbitrary delay to allow the MAX306 to switch
-    _delay(1000000);
+    _delay(10000);
     
     // Tell the ADCC module to take a reading
     ADCC_StartConversion(adc);
@@ -111,7 +219,7 @@ static inline int16_t get_adc(const uint8_t channel) {
     while(!ADCC_IsConversionDone());
     
     // Assign result to local output register
-    out_val = (int16_t)(ADCC_GetConversionResult()) & 0x3ff; // 10-bit result
+    out_val = (uint16_t)(ADCC_GetConversionResult()) & 0xfff; // 12-bit result
     //uint16_t out_val = (ADCC_GetSingleConversion(adc));// & 0x3ff; // 10-bit result
     
     // Tell ADCC to stop taking a reading
@@ -130,7 +238,7 @@ void main(void)
     SYSTEM_Initialize();
     
     // Blink the led
-    mcc_blinky(&led_high, &led_low, 6);
+    mcc_blinky(led_high, led_low, 6);
     
     en_SetLow(); // **************** TODO REMOVE THIS LINE! ****************
 
@@ -150,15 +258,15 @@ void main(void)
     {
         led_Toggle();
         
-        static char channels[3] = {1, 2, 3};
+        static char channels[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
-        for (uint8_t i=sizeof(channels) ; i>0 ; i--) {
+        for (uint8_t i=0 ; i<sizeof(channels) ; i++) {
             
-            int16_t result = get_adc(channels[i-1]);
+            uint16_t result = get_adc(channels[i]);
             
             if (result < 0) continue;
             
-            set_buffer_16(i-1, (uint16_t)result);
+            set_buffer_16(i, (uint16_t)result);
             
             //_delay(2000000);
         }
