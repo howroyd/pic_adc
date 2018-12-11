@@ -47,8 +47,8 @@
 
 const double resolution = 5.0/1023.0;
 
-void led_high(void) {led_SetHigh();}
-void led_low(void)  {led_SetLow();}
+void led_high(void) {led_green_SetHigh();}
+void led_low(void)  {led_green_SetLow();}
 
 void mcc_blinky(void (*set_high)(void), void (*set_low)(void), const uint8_t num_flashes) {
     for (uint8_t i=0 ; i<num_flashes ; i++) {
@@ -213,7 +213,7 @@ static inline uint16_t get_adc(const uint8_t channel) {
     _delay(10000);
     
     // Tell the ADCC module to take a reading
-    ADCC_StartConversion(adc);
+    ADCC_StartConversion(adc0);
     
     // Blocking function to wait for ADCC module to complete a sample
     while(!ADCC_IsConversionDone());
@@ -256,7 +256,7 @@ void main(void)
 
     while (1)
     {
-        led_Toggle();
+        led_yellow_Toggle();
         
         static char channels[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
